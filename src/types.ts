@@ -10,7 +10,7 @@ export interface AuditIssue {
   description: string;
   affectedFiles: string[];
   completionPct: number;
-  promptId: string;
+  promptId?: string;
 }
 
 export type AuditCategory =
@@ -21,7 +21,11 @@ export type AuditCategory =
   | 'functionality'
   | 'mobile'
   | 'accessibility'
-  | 'integration';
+  | 'integration'
+  | 'checkout'
+  | 'collections'
+  | 'marquee'
+  | 'testing';
 
 export interface PromptCluster {
   id: string;
@@ -61,7 +65,7 @@ export interface AuditRuleContext {
   adapter: FrameworkAdapter;
 }
 
-export type AuditRule = (ctx: AuditRuleContext) => number;
+export type AuditRule = (ctx: AuditRuleContext) => AuditIssue[];
 
 export interface ReporterOptions {
   result: AuditResult;

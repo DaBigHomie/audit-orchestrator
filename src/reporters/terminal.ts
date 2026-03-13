@@ -5,36 +5,29 @@
 import type { AuditResult, PromptCluster, ReporterOptions } from '../types.js';
 
 function printParallelMap(clusters: PromptCluster[]): void {
+  if (clusters.length === 0) return;
+
   const line = '═'.repeat(64);
   console.log(`\n╔${line}╗`);
   console.log(`║${'PARALLEL EXECUTION MAP'.padStart(43).padEnd(64)}║`);
   console.log(`╠${line}╣`);
 
-  const waves = [
-    { name: 'WAVE 1 — Foundation', ids: ['C1', 'C3', 'C6'] },
-    { name: 'WAVE 2 — Dark Mode + Layout', ids: ['C2', 'C4'] },
-    { name: 'WAVE 3 — Shop/PDP + Functional', ids: ['C5', 'C7'] },
-    { name: 'WAVE 4 — Cross-Cutting', ids: ['C8', 'C9'] },
-  ];
+  const totalPrompts = clusters.reduce((s, c) => s + c.prompts.length, 0);
+  const totalAgents = clusters.reduce((s, c) => s + c.agentCount, 0);
+  const totalMinutes = clusters.reduce((s, c) => s + c.estimatedMinutes, 0);
 
-  for (const wave of waves) {
+  for (const c of clusters) {
     console.log(`║${''.padEnd(64)}║`);
-    console.log(`║  🌊 ${wave.name.padEnd(58)}║`);
-    console.log(`║  ${'─'.repeat(60)}  ║`);
-    for (const id of wave.ids) {
-      const c = clusters.find((cl) => cl.id === id);
-      if (!c) continue;
-      const mode = c.canParallelize ? '⚡ PARALLEL' : '🔗 SEQUENTIAL';
-      const agents = `${c.agentCount} agents`;
-      const prompts = c.prompts.join(', ');
-      console.log(`║  [${c.id}] ${c.name.padEnd(28)} ${mode.padEnd(14)} ${agents.padEnd(10)}║`);
-      console.log(`║       Prompts: ${prompts.padEnd(47)}║`);
-    }
+    const mode = c.canParallelize ? '⚡ PARALLEL' : '🔗 SEQUENTIAL';
+    const agents = `${c.agentCount} agents`;
+    const prompts = c.prompts.join(', ');
+    console.log(`║  [${c.id}] ${c.name.padEnd(28)} ${mode.padEnd(14)} ${agents.padEnd(10)}║`);
+    console.log(`║       Issues: ${prompts.padEnd(48)}║`);
   }
 
   console.log(`║${''.padEnd(64)}║`);
-  console.log(`║  Total: 9 clusters · 30 prompts · 28 agents · ~6 hours${''.padEnd(8)}║`);
-  console.log(`║  Parallelized: ~2.5 hours with max concurrency${''.padEnd(16)}║`);
+  const summary = `Total: ${clusters.length} clusters · ${totalPrompts} issues · ${totalAgents} agents · ~${Math.ceil(totalMinutes / 60)}h`;
+  console.log(`║  ${summary.padEnd(62)}║`);
   console.log(`╚${line}╝`);
 }
 
@@ -77,7 +70,7 @@ export function reportTerminal(options: ReporterOptions): void {
       '▓'.repeat(Math.round(issue.completionPct / 10)) +
       '░'.repeat(10 - Math.round(issue.completionPct / 10));
     console.log(`  ${icon} [${issue.id}] ${issue.title}`);
-    console.log(`     ${issue.severity.toUpperCase().padEnd(10)} ${pctBar} ${issue.completionPct}%  → Prompt: ${issue.promptId}`);
+    const promptRef = issue.promptId ? `→ Prompt: ${issue.promptId}` : '';    console.log(`     ${issue.severity.toUpperCase().padEnd(10)} ${pctBar} ${issue.completionPct}%  ${promptRef}`);
     if (verbose) {
       console.log(`     ${issue.description}`);
       console.log(`     Files: ${issue.affectedFiles.join(', ')}`);
@@ -98,7 +91,7 @@ export function reportTerminal(options: ReporterOptions): void {
     console.log(
       `     ${mode} · ${cluster.agentCount} agents · ${cluster.estimatedMinutes}min · ${deps}`
     );
-    console.log(`     Prompts: ${cluster.prompts.join(' → ')}`);
+    console.log(`     Issues: ${cluster.prompts.join(' → ')}`);
   }
 
   printParallelMap(result.clusters);

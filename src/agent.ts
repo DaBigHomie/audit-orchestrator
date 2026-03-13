@@ -70,10 +70,10 @@ const RULE_META: RuleMeta[] = [
 
 // ── Score → status mapping ────────────────────────────────────────────────────
 
-function scoreToStatus(score: number): AgentStatus {
-  if (score >= 80) return 'success';
-  if (score >= 40) return 'failed'; // partial = needs work
-  return 'failed';
+function findingsToStatus(findings: import('./types.js').AuditIssue[]): AgentStatus {
+  if (findings.length === 0) return 'success';
+  if (findings.some((f) => f.severity === 'critical' || f.severity === 'high')) return 'failed';
+  return 'success';
 }
 
 // ── Create UGWTF agents from audit rules ──────────────────────────────────────
@@ -103,16 +103,16 @@ function createVisualAuditAgent(meta: RuleMeta): UgwtfAgent {
       try {
         const adapter = detectAdapter(ctx.localPath);
         const ruleCtx: AuditRuleContext = { root: ctx.localPath, adapter };
-        const score = ruleFn(ruleCtx);
-        const status = scoreToStatus(score);
+        const findings = ruleFn(ruleCtx);
+        const status = findingsToStatus(findings);
 
         return {
           agentId: `visual-audit-${meta.id}`,
           status,
           repo: ctx.repoAlias,
           duration: Date.now() - start,
-          message: `${meta.name}: ${score}% (${status})`,
-          artifacts: [`${meta.id}=${score}`],
+          message: `${meta.name}: ${findings.length} issue(s) (${status})`,
+          artifacts: findings.map((f) => `${f.id}:${f.severity}:${f.title}`),
         };
       } catch (err) {
         return {
