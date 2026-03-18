@@ -10,16 +10,9 @@
  *   CLUSTERS.push(visualAuditCluster);
  */
 import { visualAuditAgents } from './agent.js';
+import type { Cluster } from '@dabighomie/ugwtf/types';
 
-export interface VisualAuditCluster {
-  id: string;
-  name: string;
-  description: string;
-  agents: typeof visualAuditAgents;
-  dependsOn: string[];
-}
-
-export const visualAuditCluster: VisualAuditCluster = {
+export const visualAuditCluster: Cluster = {
   id: 'visual-audit',
   name: 'Visual Audit & Issue Detection',
   description: 'Run 10 visual/UX audit rules: dark mode, accessibility, design system, mobile, checkout, collections, Supabase, test IDs, buttons, marquee',

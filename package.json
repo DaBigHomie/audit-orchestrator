@@ -37,12 +37,22 @@
     "dist"
   ],
   "devDependencies": {
+    "@dabighomie/ugwtf": "file:../ugwtf",
     "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "@dabighomie/ugwtf": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@dabighomie/ugwtf": {
+      "optional": true
+    }
   },
   "exports": {
     ".": "./dist/index.js",
     "./agent": "./dist/agent.js",
     "./cluster": "./dist/cluster.js",
+    "./plugin": "./dist/ugwtf-plugin.js",
     "./prompt-scanner": "./dist/prompt-scanner.js",
     "./types": "./dist/types.js"
   }

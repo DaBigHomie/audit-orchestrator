@@ -11,39 +11,7 @@
 import { detectAdapter } from './adapters/index.js';
 import { RULES } from './rules/index.js';
 import type { AuditRuleContext } from './types.js';
-
-// ── UGWTF-compatible interfaces (mirrors ugwtf/src/types.ts) ──────────────────
-// Defined locally to avoid a hard dependency on @dabighomie/ugwtf
-
-export type AgentStatus = 'idle' | 'running' | 'success' | 'failed' | 'skipped';
-
-export interface UgwtfAgentContext {
-  repoAlias: string;
-  repoSlug: string;
-  github: unknown;
-  localPath: string;
-  dryRun: boolean;
-  logger: { info(msg: string): void; warn(msg: string): void; error(msg: string): void; group(msg: string): void; groupEnd(): void };
-}
-
-export interface UgwtfAgentResult {
-  agentId: string;
-  status: AgentStatus;
-  repo: string;
-  duration: number;
-  message: string;
-  artifacts: string[];
-  error?: string;
-}
-
-export interface UgwtfAgent {
-  id: string;
-  name: string;
-  description: string;
-  clusterId: string;
-  execute(ctx: UgwtfAgentContext): Promise<UgwtfAgentResult>;
-  shouldRun(ctx: UgwtfAgentContext): boolean;
-}
+import type { Agent, AgentContext, AgentResult, AgentStatus } from '@dabighomie/ugwtf/types';
 
 // ── Rule metadata for agent wrapping ──────────────────────────────────────────
 
@@ -78,7 +46,7 @@ function findingsToStatus(findings: import('./types.js').AuditIssue[]): AgentSta
 
 // ── Create UGWTF agents from audit rules ──────────────────────────────────────
 
-function createVisualAuditAgent(meta: RuleMeta): UgwtfAgent {
+function createVisualAuditAgent(meta: RuleMeta): Agent {
   const ruleFn = RULES[meta.id as keyof typeof RULES];
 
   return {
@@ -87,7 +55,7 @@ function createVisualAuditAgent(meta: RuleMeta): UgwtfAgent {
     description: meta.description,
     clusterId: 'visual-audit',
 
-    shouldRun(ctx: UgwtfAgentContext): boolean {
+    shouldRun(ctx: AgentContext): boolean {
       // Skip if localPath doesn't exist or isn't set
       if (!ctx.localPath) return false;
       // If rule has framework restrictions, check adapter
@@ -98,7 +66,7 @@ function createVisualAuditAgent(meta: RuleMeta): UgwtfAgent {
       return true;
     },
 
-    async execute(ctx: UgwtfAgentContext): Promise<UgwtfAgentResult> {
+    async execute(ctx: AgentContext): Promise<AgentResult> {
       const start = Date.now();
       try {
         const adapter = detectAdapter(ctx.localPath);
@@ -130,4 +98,4 @@ function createVisualAuditAgent(meta: RuleMeta): UgwtfAgent {
 }
 
 /** All 10 visual audit agents, ready for UGWTF cluster registration. */
-export const visualAuditAgents: UgwtfAgent[] = RULE_META.map(createVisualAuditAgent);
+export const visualAuditAgents: Agent[] = RULE_META.map(createVisualAuditAgent);
